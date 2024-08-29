@@ -1,0 +1,49 @@
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif; /* Set a default font for the body */
+    text-align: left; /* left align text */
+}
+
+h1 {
+    font-size: 24px; /* Set a larger font size for the title */
+    margin-bottom: 20px; /* Add some space below the title */
+}
+
+input[type="file"] {
+    margin-bottom: 20px; /* Add space below the file input */
+}
+
+.chart-container {
+    display: flex; /* Use flexbox for layout */
+    align-items: center; /* Center items vertically */
+    justify-content: flex-start; /* Align items to the left */
+    width: 600px; /* Set a fixed width for the chart container */
+    height: 400px; /* Set a fixed height for the chart container */
+    margin: 0; /* Center the container horizontally on the page */
+    border: 1px solid #ccc; /* Optional: Add a border to the container */
+    position: relative; /* Make the container relative for absolute positioning of the handle */
+}
+
+#gains-container {
+    margin-top: 20px; /* Add space above the gains container */
+    padding: 10px; /* Add padding inside the container */
+    border: 1px solid #ccc; /* Optional: Add a border */
+    background-color: #f9f9f9; /* Optional: Add a background color */
+}
+
+#resize-handle {
+    cursor: nwse-resize; /* Change cursor to indicate resizing */
+    width: 10px; /* Width of the resize handle */
+    height: 10px; /* Height of the resize handle */
+    background: gray; /* Color of the resize handle */
+    position: absolute; /* Position it absolutely within the container */
+    bottom: 0; /* Align to the bottom */
+    right: 0; /* Align to the right */
+}
+
+canvas {
+    width: 100% !important; /* Allow the canvas to take the full width of the container */
+    height: 100% !important; /* Allow the canvas to take the full height of the container */
+    display: block; /* Ensure it is displayed as a block element */
+}
