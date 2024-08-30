@@ -1,3 +1,5 @@
+let currentContainerIndex = 0; // To keep track of the current container
+
 document.getElementById('fileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {
@@ -42,6 +44,10 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
                 }
 
                 processTrades(validData);
+				
+				// Create the first container after processing, new containers will be created with dynamicContainerCreation
+                createNewContainer();
+				
             },
             error: function(error) {
                 showError("Error reading the file: " + error.message);
@@ -51,6 +57,8 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
         showError("No file selected. Please select a CSV file.");
     }
 });
+
+
 
 // Function to validate the date format M/DD/YY
 function isValidDateFormat(dateString) {
@@ -67,7 +75,8 @@ function isValidDateFormat(dateString) {
 
 function processTrades(data) {
     const dailyGains = {};
-
+    
+    // Aggregate daily gains and losses
     data.forEach(trade => {
         const date = trade.DATE;
         const amount = parseFloat(trade.AMOUNT);
@@ -75,18 +84,24 @@ function processTrades(data) {
         if (!dailyGains[date]) {
             dailyGains[date] = 0;
         }
-        dailyGains[date] += amount;
+        dailyGains[date] += amount; // This can be positive (gain) or negative (loss)
     });
 
+    // Calculate daily total
+    const dailyTotal = Object.values(dailyGains).reduce((acc, gain) => acc + gain, 0);
+
+    // Display daily gains/losses
+    displayGains(dailyTotal);
+
+    // Prepare data for chart
     const labels = Object.keys(dailyGains);
     const gains = Object.values(dailyGains);
-
-    console.log(labels);
-    console.log(gains);
-
-    // Calculate initial font size based on the default canvas size
     const initialFontSize = Math.max(12, 800 / 50); // Example calculation based on initial height
     createChart(labels, gains, initialFontSize);
+}
+
+function displayGains(daily) {
+    document.getElementById('daily-gains').textContent = `Daily Gains/Losses: ${daily.toFixed(2)}`;
 }
 
 function createChart(labels, gains, fontSize) {
@@ -127,15 +142,19 @@ function createChart(labels, gains, fontSize) {
     }
 
     try {
+        // Create a color array based on gains
+        const backgroundColors = gains.map(gain => gain >= 0 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)');
+        const borderColors = gains.map(gain => gain >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)');
+
         window.myChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar', // Change to 'bar' for a bar chart
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Gains/Losses per Day',
                     data: gains,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
                     borderWidth: 1
                 }]
             },
@@ -197,7 +216,6 @@ function createChart(labels, gains, fontSize) {
         showError("Error creating the chart: " + error.message);
     }
 }
-
 
 // Function to show error messages
 function showError(message) {
