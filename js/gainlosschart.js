@@ -61,11 +61,9 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
 function isValidDateFormat(dateString) {
     const dateParts = dateString.split('/');
     if (dateParts.length !== 3) return false;
-
     const month = parseInt(dateParts[0], 10);
     const day = parseInt(dateParts[1], 10);
     const year = parseInt(dateParts[2], 10) + 2000; // Assuming the year is in 2000s
-
     const date = new Date(year, month - 1, day); // Month is 0-indexed in JavaScript
     return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
@@ -75,20 +73,16 @@ function processTrades(data) {
     let totalMiscFees = 0; // Variable to hold total miscellaneous fees
     let totalCommissionsFees = 0; // Variable to hold total commissions and fees
     
-    // Aggregate daily gains and losses
+    // Aggregate daily gains and losses and fees
     data.forEach(trade => {
         const date = trade.DATE;
         const amount = parseFloat(trade.AMOUNT);
         const miscFees = parseFloat(trade['Misc Fees']) || 0; // Get Misc Fees, default to 0 if NaN
         const commissionsFees = parseFloat(trade['Commissions & Fees']) || 0; // Get Commissions & Fees, default to 0 if NaN
-
-        // Aggregate daily gains/losses
         if (!dailyGains[date]) {
             dailyGains[date] = 0;
         }
         dailyGains[date] += amount; // This can be positive (gain) or negative (loss)
-
-        // Aggregate total fees
         totalMiscFees += miscFees;
         totalCommissionsFees += commissionsFees;
     });
@@ -97,8 +91,7 @@ function processTrades(data) {
     const dailyTotal = Object.values(dailyGains).reduce((acc, gain) => acc + gain, 0);
 
     // Display daily gains/losses and total fees
-    displayGains(dailyTotal);
-    displayTotalFees(totalMiscFees, totalCommissionsFees); // Call a new function to display total fees
+    displayData(totalMiscFees, totalCommissionsFees, dailyTotal); // Call a new function to display total fees
 
     // Prepare data for chart
     const labels = Object.keys(dailyGains);
@@ -107,24 +100,20 @@ function processTrades(data) {
     createChart(labels, gains, initialFontSize);
 }
 
-// Function to display misc fees and total commissions and fees
-function displayTotalFees(miscFees, commissionsFees) {
+// Function to display data such as fees and totals
+function displayData(miscFees, commissionsFees, daily) {
     const feesMessageDiv = document.getElementById('total-misc-fees');
 	const commsMessageDiv = document.getElementById('total-commissions-fees');
-	const calculateTotal = Number(miscFees); + Number(commissionsFees) + Number(processTrades.dailyTotal);
+	const calculateTotal =  Number(daily) + Number(miscFees) + Number(commissionsFees);
 	const grandTotalDiv = document.getElementById('grand-total-fees');
-	console.log(miscFees); // Should be 'number'
-console.log(commissionsFees); // Should be 'number'
-console.log(Number(processTrades.dailyTotal)); // Should be 'number'
+		//console.log(Number(calculateTotal));
+		//console.log(Number(miscFees));
+		//console.log(Number(commissionsFees));
+	document.getElementById('total-gains').textContent = `CSV Total Gains/Losses (before Fees): $${daily.toFixed(2)}`;
+    feesMessageDiv.textContent = `CSV Total Misc Fees: $${miscFees.toFixed(2)}`;
+	commsMessageDiv.textContent = `CSV Total Commissions & Fees: $${commissionsFees.toFixed(2)}`;
+	grandTotalDiv.textContent = `CSV Total Gains/Losses (after Fees): $${calculateTotal.toFixed(2)}`;
 
-	
-    feesMessageDiv.textContent = `Total Misc Fees: ${miscFees.toFixed(3)}`;
-	commsMessageDiv.textContent = `Total Commissions & Fees: ${commissionsFees.toFixed(4)}`;
-	grandTotalDiv.textContent = `Total Gains/Losses (after Fees)(IN PROGRESS, THIS FUNCTION NOT WORKING): ${calculateTotal.toFixed(5)}`;
-}
-
-function displayGains(daily) {
-    document.getElementById('total-gains').textContent = `Total Gains/Losses (before Fees): ${daily.toFixed(2)}`;
 }
 
 function createChart(labels, gains, fontSize) {
