@@ -1,3 +1,4 @@
+//Event Listener for .csv file load
 document.getElementById('fileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {
@@ -42,6 +43,10 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
                 }
 
                 processTrades(validData);
+                
+                // i believe this is leftover code from when we had dynamic containers, too complex for me
+                //createNewContainer(); 
+                
             },
             error: function(error) {
                 showError("Error reading the file: " + error.message);
@@ -67,26 +72,59 @@ function isValidDateFormat(dateString) {
 
 function processTrades(data) {
     const dailyGains = {};
-
+    let totalMiscFees = 0; // Variable to hold total miscellaneous fees
+    let totalCommissionsFees = 0; // Variable to hold total commissions and fees
+    
+    // Aggregate daily gains and losses
     data.forEach(trade => {
         const date = trade.DATE;
         const amount = parseFloat(trade.AMOUNT);
+        const miscFees = parseFloat(trade['Misc Fees']) || 0; // Get Misc Fees, default to 0 if NaN
+        const commissionsFees = parseFloat(trade['Commissions & Fees']) || 0; // Get Commissions & Fees, default to 0 if NaN
 
+        // Aggregate daily gains/losses
         if (!dailyGains[date]) {
             dailyGains[date] = 0;
         }
-        dailyGains[date] += amount;
+        dailyGains[date] += amount; // This can be positive (gain) or negative (loss)
+
+        // Aggregate total fees
+        totalMiscFees += miscFees;
+        totalCommissionsFees += commissionsFees;
     });
 
+    // Calculate total gains/losses for worksheet
+    const dailyTotal = Object.values(dailyGains).reduce((acc, gain) => acc + gain, 0);
+
+    // Display daily gains/losses and total fees
+    displayGains(dailyTotal);
+    displayTotalFees(totalMiscFees, totalCommissionsFees); // Call a new function to display total fees
+
+    // Prepare data for chart
     const labels = Object.keys(dailyGains);
     const gains = Object.values(dailyGains);
-
-    console.log(labels);
-    console.log(gains);
-
-    // Calculate initial font size based on the default canvas size
     const initialFontSize = Math.max(12, 800 / 50); // Example calculation based on initial height
     createChart(labels, gains, initialFontSize);
+}
+
+// Function to display misc fees and total commissions and fees
+function displayTotalFees(miscFees, commissionsFees) {
+    const feesMessageDiv = document.getElementById('total-misc-fees');
+	const commsMessageDiv = document.getElementById('total-commissions-fees');
+	const calculateTotal = Number(miscFees); + Number(commissionsFees) + Number(processTrades.dailyTotal);
+	const grandTotalDiv = document.getElementById('grand-total-fees');
+	console.log(miscFees); // Should be 'number'
+console.log(commissionsFees); // Should be 'number'
+console.log(Number(processTrades.dailyTotal)); // Should be 'number'
+
+	
+    feesMessageDiv.textContent = `Total Misc Fees: ${miscFees.toFixed(3)}`;
+	commsMessageDiv.textContent = `Total Commissions & Fees: ${commissionsFees.toFixed(4)}`;
+	grandTotalDiv.textContent = `Total Gains/Losses (after Fees)(IN PROGRESS, THIS FUNCTION NOT WORKING): ${calculateTotal.toFixed(5)}`;
+}
+
+function displayGains(daily) {
+    document.getElementById('total-gains').textContent = `Total Gains/Losses (before Fees): ${daily.toFixed(2)}`;
 }
 
 function createChart(labels, gains, fontSize) {
@@ -127,15 +165,19 @@ function createChart(labels, gains, fontSize) {
     }
 
     try {
+        // Create a color array based on gains
+        const backgroundColors = gains.map(gain => gain >= 0 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)');
+        const borderColors = gains.map(gain => gain >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)');
+
         window.myChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar', // Change to 'bar' for a bar chart
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Gains/Losses per Day',
                     data: gains,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
                     borderWidth: 1
                 }]
             },
@@ -198,7 +240,6 @@ function createChart(labels, gains, fontSize) {
     }
 }
 
-
 // Function to show error messages
 function showError(message) {
     const errorMessageDiv = document.getElementById('error-message');
@@ -216,6 +257,7 @@ resizeHandle.addEventListener('mousedown', (event) => {
     isResizing = true;
 });
 
+//Resizing Event Listener
 document.addEventListener('mousemove', (event) => {
     if (isResizing) {
         const newWidth = event.clientX - chartContainer.getBoundingClientRect().left;
